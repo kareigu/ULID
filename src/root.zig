@@ -25,13 +25,13 @@ const ULID = extern struct {
 };
 
 test "creating new ULID" {
-    const ulid = ULID._init(5, 10);
+    const ulid = ULID._init(1718578280463, 492354077685367681596350);
     const expected = ULID{
-        .timestamp_high = 0,
-        .timestamp_low = 5,
-        .random_high = 0,
-        .random_mid = 0,
-        .random_low = 10,
+        .timestamp_high = 26223423,
+        .timestamp_low = 30735,
+        .random_high = 26690,
+        .random_mid = 2439682851,
+        .random_low = 2091924414,
     };
 
     try std.testing.expectEqualDeep(expected, ulid);
