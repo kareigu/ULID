@@ -86,17 +86,37 @@ const ULID = extern struct {
         }
     }
 
-    pub fn str(self: *const ULID) [STR_LENGTH]u8 {
-        var buf = [_]u8{0} ** STR_LENGTH;
+    fn str_to_buffer(self: *const ULID, buf: []u8) void {
         const timestamp: u48 = @as(u48, @intCast(self.timestamp_high)) << 16 | @as(u48, @intCast(self.timestamp_low));
         format_to_base32(timestamp, buf[0..10]);
 
         const random: u80 = @as(u80, @intCast(self.random_high)) << 64 | @as(u80, @intCast(self.random_mid)) << 32 | @as(u80, @intCast(self.random_low));
-        format_to_base32(random, buf[10..STR_LENGTH]);
+        format_to_base32(random, buf[10..buf.len]);
+    }
 
+    pub fn str(self: *const ULID) [STR_LENGTH]u8 {
+        var buf = [_]u8{0} ** STR_LENGTH;
+        self.str_to_buffer(&buf);
         return buf;
     }
 };
+
+export fn ULID_create() ULID {
+    return ULID.init();
+}
+
+export fn ULID_str(ulid: *const ULID, buf: [*]c_char, len: c_ulonglong) void {
+    ULID.str_to_buffer(ulid, @ptrCast(buf[0..len]));
+}
+
+export fn ULID_parse(ulid: *ULID, str: [*]const c_char, len: c_ulonglong) c_int {
+    const u = ULID.parse(@ptrCast(str[0..len])) catch |e| {
+        return @intFromError(e);
+    };
+
+    ulid.* = u;
+    return 0;
+}
 
 test "creating new ULID" {
     const ulid = ULID._init(1718578280463, 492354077685367681596350);
