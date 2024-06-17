@@ -16,6 +16,7 @@ const ULID = extern struct {
         'W', 'X', 'Y', 'Z'
     };
     // zig fmt: on
+    const STR_LENGTH = 26;
 
     pub fn init() ULID {
         const timestamp: u48 = @intCast(std.time.milliTimestamp());
@@ -50,13 +51,13 @@ const ULID = extern struct {
         }
     }
 
-    pub fn str(self: *const ULID) [26]u8 {
-        var buf = [_]u8{0} ** 26;
+    pub fn str(self: *const ULID) [STR_LENGTH]u8 {
+        var buf = [_]u8{0} ** STR_LENGTH;
         const timestamp: u48 = @as(u48, @intCast(self.timestamp_high)) << 16 | @as(u48, @intCast(self.timestamp_low));
         format_to_base32(timestamp, buf[0..10]);
 
         const random: u80 = @as(u80, @intCast(self.random_high)) << 64 | @as(u80, @intCast(self.random_mid)) << 32 | @as(u80, @intCast(self.random_low));
-        format_to_base32(random, buf[10..26]);
+        format_to_base32(random, buf[10..STR_LENGTH]);
 
         return buf;
     }
