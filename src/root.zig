@@ -7,6 +7,12 @@ const ULID = extern struct {
     random_mid: u32,
     random_low: u32,
 
+    pub const Error = error{
+        InvalidLength,
+        InvalidSymbol,
+        ValueTooHigh,
+    };
+
     // zig fmt: off
     const BASE32 = [_]u8{ 
         '0', '1', '2', '3', '4', '5', '6',
@@ -32,6 +38,35 @@ const ULID = extern struct {
             .random_mid = @truncate(random >> 32),
             .random_low = @truncate(random),
         };
+    }
+
+    fn parse_slice(comptime T: type, slice: []const u8) Error!T {
+        var out: T = 0;
+        const size = slice.len - 1;
+        for (0..slice.len) |i| {
+            const c = slice[size - i];
+            const val: T = blk: for (BASE32, 0..) |b, j| {
+                if (b == c) {
+                    break :blk @intCast(j);
+                }
+            } else {
+                return error.InvalidSymbol;
+            };
+            out += val * (std.math.powi(T, @intCast(BASE32.len), @intCast(size - i)) catch return error.ValueTooHigh);
+        }
+
+        return out;
+    }
+
+    pub fn parse(string: []const u8) Error!ULID {
+        if (string.len != STR_LENGTH) {
+            return error.InvalidLength;
+        }
+
+        const timestamp = try parse_slice(u48, string[0..10]);
+        const random = try parse_slice(u80, string[10..26]);
+
+        return _init(timestamp, random);
     }
 
     fn format_to_base32(n: anytype, buf: []u8) void {
@@ -80,4 +115,17 @@ test "string formatting" {
     const ulid = ULID._init(1718578280463, 492354077685367681596350);
     const str = ulid.str();
     try std.testing.expectEqualStrings("F0YYKH0J10YXE0BYD4VMT2911D", &str);
+}
+
+test "parse from string" {
+    const str = "F0YYKH0J10YXE0BYD4VMT2911D";
+    const ulid = try ULID.parse(str);
+    const expected = ULID{
+        .timestamp_high = 26223423,
+        .timestamp_low = 30735,
+        .random_high = 26690,
+        .random_mid = 2439682851,
+        .random_low = 2091924414,
+    };
+    try std.testing.expectEqualDeep(expected, ulid);
 }
