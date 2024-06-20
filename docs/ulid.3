@@ -1,0 +1,65 @@
+.Dd June 19, 2024
+.Dt ULID 3
+.Os
+
+.Sh NAME
+.Nm ulid
+.Nd generate and parse Universally Unique Lexicographically Sortable Identifiers
+
+.Sh LIBRARY
+.Lb ulid
+
+.Sh SYNOPSIS
+.In ulid.h
+.Ft ULID 
+.Fn ULID_create
+.Ft void
+.Fn ULID_str "ULID const* ulid" "char* buf" "uint64_t len"
+.Ft int
+.Fn ULID_parse "ULID* ulid" "char const* str" "uint64_t len"
+
+.Sh DESCRIPTION
+To generate a new ULID,
+.Fn ULID_create
+should be called without any parameters.
+.Pp
+This will generate a new 
+.Ft ULID
+based on a 48 bit value for the current time along with a random 80 bit value, 
+as defined in the ULID specification.
+.Pp
+Converting a
+.Ft ULID
+to a string is handled via
+.Fn ULID_str
+which takes a pointer to a
+.Fa ULID const*
+along with a 
+.Fa char
+buffer and its length.
+.Pp
+This buffer can technically be any length, but going by the ULID specification it should be 26 characters in size.
+.Pp
+Parsing a string back to a
+.Ft ULID
+is done via 
+.Fn ULID_parse
+which takes a
+.Fa ULID*
+to the output variable, along with the string to parse and its length.
+.Pp
+This function will return a non-zero value on error.
+
+.Sh ERRORS
+.Fn ULID_parse
+will return a non-zero value without setting 
+.Va errno
+on an error.
+
+.Sh STANDARDS
+.Fn ULID_create
+,
+.Fn ULID_str
+and
+.Fn ULID_parse
+conform to the Universally Unique Lexicographically Sortable Identifier specification.
